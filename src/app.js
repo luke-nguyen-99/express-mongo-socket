@@ -18,12 +18,12 @@ app.use(cors());
 app.use(helmet({ contentSecurityPolicy: false }));
 
 app.use(express.json());
-app.set('views', path.join(__dirname, "/views"));
+app.set('views', path.join(__dirname, "/../views"));
 app.set('view engine', 'ejs');
 
 app.use(express.static('public'));
 app.get('/', (req, res) => {
-  // res.send('hello world');
+  
   res.render('home');
 })
 
