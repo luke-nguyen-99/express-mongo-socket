@@ -3,77 +3,60 @@ const app = express();
 const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
-const { connectDatabase } = require('./database/connect-database');
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const mid = require('./middleware/authentication.middleware');
 
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require('socket.io');
 
 const io = new Server(server);
-
 require('./socket')(io);
 
+const corsOptions = {
+  origin: "*",
+  optionsSuccessStatus: 200,
+};
 
-app.use(cors());
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+    parameterLimit: 1000000,
+    limit: "500mb",
+  })
+);
+app.use(bodyParser.json({ limit: "25mb" }));
+app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(helmet({ contentSecurityPolicy: false }));
-
 app.use(express.json());
-app.set('views', path.join(__dirname, "/../views"));
+app.use(express.static('src/public'));
+
+app.set('views', path.join(__dirname, "/views"));
 app.set('view engine', 'ejs');
 
-app.use(express.static('public'));
-app.get('/', (req, res) => {
-  
+
+app.get('/test', (req, res) => {
+  res.send({ test: 'ok' });
+})
+app.get('/template', (req, res) => {
+  res.render('test');
+})
+app.use('/', [require('./auth/auth.route')]);
+app.use(mid.authentication);
+app.use('/home', (req, res) => {
   res.render('home');
 })
-
-app.use((req, res, next) => {
-  if (req.a) {
-    res.status(400).send('login fail')
-  }
-  next();
-})
-
-app.get('/login', (req, res) => {
-  res.send({ result: 'login successfully' });
-})
-
 app.use('/room', [require('./data/room/room.route')]);
 
-
-// connectDatabase();
-
-// const server = app.listen(3000, () => {
-//   console.log('server running in port 3000');
-// });
-
-// const { Server } = require('socket.io');
-
-
-
-// io.on('connection', (socket) => {
-//   console.log('a user connected');
-//   socket.on('chat message', msg => {
-//     console.log('user đã chat: ' + msg);
-//     io.emit('chat message', msg);
-//   });
-// });
-
-
+app.use((err, req, res, next) => {
+  if (!!err) {
+    res.status(400).send({ message: err.message });
+  }
+});
 
 server.listen(3000, () => {
   console.log(`server running at http://localhost:3000/`);
 });
-// const a = new Server(test);
-// require('./socket/index')(a);
-
-
-
-// const httpServer = createServer();
-// const http = require('http').Server(app);
-// const io = require('socket.io')(http);
-
-// const io = socketIo(app);
-
-// const socketController = require('./socket')(io);
 

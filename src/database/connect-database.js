@@ -4,18 +4,14 @@ const config = require('../configs');
 
 
 const connectDatabase = async () => {
-  const url = 'mongodb://' +
-    (!!config.DB_USERNAME ?  config.DB_USERNAME + ':' : '' ) + 
-    (!!config.DB_PASSWORD ?  config.DB_PASSWORD + '@' : '' ) + 
-    config.DB_HOST + ':' +
-    config.DB_PORT +
-    '/?authMechanism=DEFAULT';
-  const client = new MongoClient(url);
+  try {
+    const client = new MongoClient(config.MONGO_URL);
+    const connected = await client.connect();
 
-  client.connect().then(result => {
-    console.log('Connected successfully');
-    return result.db(config.DB_NAME);
-  });
+    return connected.db(config.DB_NAME);
+  } catch (e) {
+    throw new Error(e);
+  }
 }
 
 module.exports = { connectDatabase };
